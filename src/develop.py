@@ -7,6 +7,7 @@ Created on Thu Apr  3 16:43:44 2025
 """
 
 import numpy as np
+import matplotlib.pyplot as plt
 import os
 
 
@@ -33,3 +34,17 @@ for i, colname in enumerate(colnames):
 
 
 data[:,c["particle"]]
+
+
+fig, ax = plt.subplots()
+
+
+# f = 0
+# x = data[]
+# plt.scatter()
+
+
+
+
+
+
