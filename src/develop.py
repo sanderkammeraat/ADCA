@@ -8,7 +8,13 @@ Created on Thu Apr  3 16:43:44 2025
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 import os
+import glob
+from tqdm import tqdm
+import copy
+
+import addcopyfighandler
 
 
 #%% < -  These mark cells
@@ -17,7 +23,13 @@ import os
 #%%
 #Get the folder of this project. Using os.path.join() so it works well on Windows and Unix 
 project_folder = os.getcwd()
-test_trajectories_file_path = os.path.join(project_folder, "testdata","Trayectory Hydrazine 003.csv")
+
+test_trajectories_file_path = os.path.join(project_folder, "testdata","0304","003","Trayectory Hydrazine 003.csv")
+
+test_trajectories_file_path = os.path.join(project_folder, "testdata","0404","003","Trayectory Hydrazine 003_entire_field.csv")
+
+#test_trajectories_file_path = os.path.join(project_folder, "testdata","0404","017","Trayectory Hydrazine 017.csv")
+
 
 
 data = np.loadtxt(test_trajectories_file_path,delimiter=",", skiprows=1)[:,1:]
@@ -70,7 +82,7 @@ y = np.ma.masked_array( np.zeros( shape = (Nframes,Nparticles_max)), True )
 
 # Let's now fill the arrays, by looping over time.
 
-for i  in range(Nframes):
+for i  in tqdm(range(Nframes)):
 
     #boolean to slice out data that belongs to frame i
     frame_bools = data[:,c["frame"]]==i
@@ -87,16 +99,209 @@ for i  in range(Nframes):
     #to correctly place the particle data
     #particle_inds = 
     
+#%%
 
+#Calculate the frame displacement vectors 
+vx = np.ma.diff(x, axis=0)
+
+vy = np.ma.diff(y, axis=0)
+    
+
+#%%
+
+# To test the extraction, plot on top of actual pngs.
+
+frame_folder_path = os.path.join(project_folder, "testdata","0304","003","frames")
+
+frame_folder_path = os.path.join(project_folder, "testdata","0404","003","frames")
+
+#frame_folder_path = os.path.join(project_folder, "testdata","0404","017","frames")
+
+frame_file_paths = sorted(glob.glob(os.path.join(frame_folder_path, "*.png") ))
+
+#%%
+
+#Load frame 0
+
+frame = plt.imread(frame_file_paths[0])
+
+
+colors = plt.cm.rainbow(np.linspace(0,1,Nparticles_max))
+
+
+
+fig, ax = plt.subplots()
+
+title = ax.text(0.5,0.85, "", bbox={'facecolor':'w', 'alpha':0.5, 'pad':5},
+                transform=ax.transAxes, ha="center")
+
+
+
+scatter = ax.scatter(x[0,:], y[0,:], c =colors, s=5)
+
+lines = [0] * Nparticles_max
+
+
+for i in range(Nparticles_max):
+    lines[i] = plt.plot(x[:1,i], y[:1,i], c = colors[i] )
+
+
+image = ax.imshow(frame)
+ax.set_xlabel('x')
+ax.set_xlabel('y')
+
+def update_frame(i):
+
+    
+    title.set_text("frame %d" %i)
+    xi = x[i,:]
+    yi = y[i,:]
+    
+    scatter.set_offsets(np.stack([xi,yi]).T)
+    
+    for j, line in enumerate(lines):
+      line[0].set_data(x[:i,j], y[:i,j])
+        
+    image.set_data(plt.imread(frame_file_paths[i]))
+        
+    return scatter,  image, title, *[line[0] for line in lines]
+
+
+anim = animation.FuncAnimation(fig, update_frame, range(0, Nframes, 10), interval=0.1, blit=True, repeat=False)
+plt.show()
+
+## Check!
 
 
 #%%
+
+
+def detect_clusters(x,y, r_cut):
+    
+    in_clusters = np.zeros(shape = x.shape,dtype=bool)
+    
+    
+    
+    for i in tqdm(range(x.shape[0])):
+        xi = x[i,:]
+        yi = y[i,:]
+        
+        for p in range(x.shape[1]):
+            
+            dxi_p = xi - xi[p]
+            
+            dyi_p = yi - yi[p]
+            
+            r2_p = dxi_p**2 + dyi_p**2
+        
+            
+            
+            if np.ma.min(r2_p[r2_p>0])<=r_cut**2:
+                
+                #print(np.ma.min(r2_p[r2_p>0]))
+                
+                in_clusters[i,p]=True
+                
+    xc = copy.deepcopy(x)
+    yc = copy.deepcopy(y)
+    
+    #Mask if not in cluster
+    xc.mask[~in_clusters]=True
+    
+    yc.mask[~in_clusters]=True
+    
+    
+    return in_clusters, xc, yc
+
+
+in_clusters, xc, yc = detect_clusters(x, y, 30)
+
+#%%
+            
+            
+            
+            
+frame = plt.imread(frame_file_paths[0])
+
+
+frame = plt.imread(frame_file_paths[0])
+
+
+colors = plt.cm.rainbow(np.linspace(0,1,Nparticles_max))
+
+
+
+fig, ax = plt.subplots(figsize=(20,20))
+
+title = ax.text(0.5,0.85, "", bbox={'facecolor':'w', 'alpha':0.5, 'pad':5},
+                transform=ax.transAxes, ha="center")
+
+
+
+
+
+lines = [0] * Nparticles_max
+
+
+for i in range(Nparticles_max):
+    lines[i] = plt.plot(xc[:1,i], yc[:1,i], c = colors[i], linewidth = 1)
+scatter = ax.scatter(x[0,:].compressed(), y[0,:].compressed(), s=10)
+
+scatter_cluster = ax.scatter(xc[0,:].compressed(), yc[0,:].compressed(), s=50, marker="d", c = "tab:orange")
+
+image = ax.imshow(frame)
+ax.set_xlabel('x')
+ax.set_xlabel('y')
+
+def update_frame(i):
+
+    
+    title.set_text("frame %d" %i)
+    xi = x[i,:].compressed()
+    yi = y[i,:].compressed()
+    
+    xic = xc[i,:].compressed()
+    yic = yc[i,:].compressed()
+
+    scatter.set_offsets(np.stack([xi,yi]).T)
+
+    scatter_cluster.set_offsets(np.stack([xic,yic]).T)
+    
+    
+    for j, line in enumerate(lines):
+      line[0].set_data(x[:i,j], y[:i,j])
+        
+    image.set_data(plt.imread(frame_file_paths[i]))
+        
+    return scatter, scatter_cluster, image, title, *[line[0] for line in lines]
+
+plt.tight_layout()
+anim = animation.FuncAnimation(fig, update_frame, range(0, Nframes, 20), interval=30, blit=True, repeat=False)
+
+
+
+anim.save(filename=os.path.join(project_folder,"analysis_movies", "clusters_0404_003.mp4"), writer="ffmpeg")
+plt.show()
+
+
+#%%
+
+
 fig, ax = plt.subplots()
 
+i = 1000
 
-plt.plot(x[:,0], y[:,0])
+image = ax.imshow(plt.imread(frame_file_paths[i]))
+ax.scatter(x[i,:].compressed(), y[i,:].compressed())
+ax.scatter(xc[i,:].compressed(), yc[i,:].compressed())
 
-plt.show()
+
+
+
+
+
+
+        
 
 
 
