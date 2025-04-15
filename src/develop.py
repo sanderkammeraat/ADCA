@@ -14,6 +14,8 @@ import glob
 from tqdm import tqdm
 import copy
 
+
+
 import addcopyfighandler
 
 
@@ -205,16 +207,29 @@ def detect_clusters(x,y, r_cut):
     xc = copy.deepcopy(x)
     yc = copy.deepcopy(y)
     
+    xnc = copy.deepcopy(x)
+    ync = copy.deepcopy(y)
+    
     #Mask if not in cluster
     xc.mask[~in_clusters]=True
     
     yc.mask[~in_clusters]=True
     
+    xnc.mask[in_clusters]=True
     
-    return in_clusters, xc, yc
+    ync.mask[in_clusters]=True
+    
+    return in_clusters, xc, yc, xnc, ync
 
+in_clusters, xc, yc, xnc, ync = detect_clusters(x, y, 30)
+#%%
+vxc = np.ma.diff(xc, axis=0)
 
-in_clusters, xc, yc = detect_clusters(x, y, 30)
+vyc = np.ma.diff(yc, axis=0)
+
+vxnc = np.ma.diff(xnc, axis=0)
+
+vync = np.ma.diff(ync, axis=0)
 
 #%%
             
@@ -244,8 +259,8 @@ lines = [0] * Nparticles_max
 
 
 for i in range(Nparticles_max):
-    lines[i] = plt.plot(xc[:1,i], yc[:1,i], c = colors[i], linewidth = 1)
-scatter = ax.scatter(x[0,:].compressed(), y[0,:].compressed(), s=10)
+    lines[i] = plt.plot(x[:1,i], y[:1,i], c = colors[i], linewidth = 1)
+scatter = ax.scatter(xnc[0,:].compressed(), ync[0,:].compressed(), s=10)
 
 scatter_cluster = ax.scatter(xc[0,:].compressed(), yc[0,:].compressed(), s=50, marker="d", c = "tab:orange")
 
@@ -257,8 +272,8 @@ def update_frame(i):
 
     
     title.set_text("frame %d" %i)
-    xi = x[i,:].compressed()
-    yi = y[i,:].compressed()
+    xi = xnc[i,:].compressed()
+    yi = ync[i,:].compressed()
     
     xic = xc[i,:].compressed()
     yic = yc[i,:].compressed()
@@ -280,7 +295,7 @@ anim = animation.FuncAnimation(fig, update_frame, range(0, Nframes, 20), interva
 
 
 
-anim.save(filename=os.path.join(project_folder,"analysis_movies", "clusters_0404_003.mp4"), writer="ffmpeg")
+#anim.save(filename=os.path.join(project_folder,"analysis_movies", "clusters_0404_003.mp4"), writer="ffmpeg")
 plt.show()
 
 
@@ -295,7 +310,217 @@ image = ax.imshow(plt.imread(frame_file_paths[i]))
 ax.scatter(x[i,:].compressed(), y[i,:].compressed())
 ax.scatter(xc[i,:].compressed(), yc[i,:].compressed())
 
+#%%
 
+t = np.arange(Nframes)
+vrms = np.ma.sqrt(np.ma.mean(vx**2 + vy**2, axis=1))
+
+vrms_nc = np.ma.sqrt(np.ma.mean(vxnc**2 + vync**2, axis=1))
+
+vrms_c  = np.ma.sqrt(np.ma.mean(vxc**2 + vyc**2, axis=1))
+
+
+
+fig, ax = plt.subplots()
+
+ax.plot(t[:-1],vrms_c, label="clusters", color="tab:orange")
+
+
+
+
+ax.plot(t[:-1],vrms, label="all", color="tab:blue")
+
+ax.plot(t[:-1],vrms_nc, label="free", color="tab:green")
+ax.set_ylim(0,1)
+ax.set_xlabel("t")
+ax.set_ylabel("v_rms(t)")
+ax.legend()
+plt.show()
+
+#%%
+nbins= 10
+
+bin_range = (0,1)
+
+
+v_hists = [0] * vx.shape[0]
+
+dens = True
+
+for i, v_hist in enumerate(v_hists):
+    
+    vsi  =np.ma.sqrt(vx[i,:]**2 + vy[i,:]**2)
+    
+    v_hists[i] = np.histogram( vsi.compressed(),nbins,bin_range, density=dens )
+    
+vc_hists = [0] * vx.shape[0]
+
+for i, v_hist in enumerate(vc_hists):
+    
+    vsi  =np.ma.sqrt(vxc[i,:]**2 + vyc[i,:]**2)
+    
+    vc_hists[i] = np.histogram( vsi.compressed(),nbins, bin_range, density=dens )
+    
+    
+vnc_hists = [0] * vx.shape[0]
+
+for i, v_hist in enumerate(vnc_hists):
+    
+    vsi  =np.ma.sqrt(vxnc[i,:]**2 + vync[i,:]**2)
+    
+    vnc_hists[i] = np.histogram( vsi.compressed(),nbins, bin_range, density=dens )
+    
+    
+
+    
+
+#%%
+
+
+
+
+def edges2centers(bins):
+
+    return (bins[:-1]+bins[1:])/2
+
+
+def plot_v_over_t_histogram(fig, ax,t, v_hists,title):
+    
+    t_colors = plt.cm.rainbow(np.linspace(0,1,len(v_hists)))
+
+    
+    
+    ax.set_title(title)
+    
+    for i, v_hist in enumerate(v_hists):
+        
+        bins = v_hist[1]
+        
+        densities =  v_hist[0]
+        
+        ax.semilogy( edges2centers(bins) ,  densities, c= t_colors[i], label="t= %d" %t[i])#, c = t_colors[i])
+        
+    plt.xlabel("v")
+    plt.ylabel("p(v)")
+    ax.legend()
+    plt.show()
+    return fig, ax
+
+
+
+fig, ax = plt.subplots()    
+fig, ax = plot_v_over_t_histogram(fig, ax, t[::100],  v_hists[::100], "Distribution of v for all")
+plt.show()
+
+fig, ax = plt.subplots()    
+fig, ax = plot_v_over_t_histogram(fig, ax, t[::100],  vnc_hists[::100], "Distribution of v for free")
+plt.show()
+
+fig, ax = plt.subplots()    
+fig, ax = plot_v_over_t_histogram(fig, ax, t[::100],  vc_hists[::100], "Distribution of v for clusters")
+plt.show()
+
+#%%
+nbins= 10
+
+bin_range = (0,1)
+
+
+v_hists = [0] * vx.shape[0]
+
+dens = True
+
+for i, v_hist in enumerate(v_hists):
+    
+    vsi  =vx[i,:]
+    
+    v_hists[i] = np.histogram( vsi.compressed(),nbins,bin_range, density=dens )
+    
+vc_hists = [0] * vx.shape[0]
+
+for i, v_hist in enumerate(vc_hists):
+    
+    vsi  =np.ma.sqrt(vxc[i,:]**2 + vyc[i,:]**2)
+    
+    vc_hists[i] = np.histogram( vsi.compressed(),nbins, bin_range, density=dens )
+    
+    
+vnc_hists = [0] * vx.shape[0]
+
+for i, v_hist in enumerate(vnc_hists):
+    
+    vsi  =np.ma.sqrt(vxnc[i,:]**2 + vync[i,:]**2)
+    
+    vnc_hists[i] = np.histogram( vsi.compressed(),nbins, bin_range, density=dens )
+
+
+#%%
+fig, ax = plt.subplots()
+n_cluster = np.ma.sum( ~xc.mask, axis=1)
+
+n_all = np.ma.sum( ~x.mask, axis=1)
+
+n_free = np.ma.sum( ~xnc.mask, axis=1)
+
+ax.plot(t, n_cluster, label="clusters", color="tab:orange")
+
+ax.plot(t, n_free, label="free", color="tab:green")
+
+ax.plot(t, n_all, label="all")
+ax.legend()
+
+ax.set_ylim(0,1000)
+
+ax.set_xlabel("t")
+
+ax.set_ylabel("N(t)")
+plt.show()
+
+#%%
+
+
+def calculate_MSD(x, y):
+    
+    msd = np.ma.masked_array( np.zeros(x.shape[0]) , True )
+    ind_0=0
+    
+    for i in range(x.shape[0]):
+        
+        msd[i] =  np.ma.mean( (x[i,:] - x[ind_0,:])**2 + (y[i,:] - y[ind_0,:])**2 )
+
+
+    return msd
+
+
+msd_nc = calculate_MSD(xnc, ync)
+
+msd_c = calculate_MSD(xc, yc)
+
+msd = calculate_MSD(x, y)
+
+#%%
+fig, ax = plt.subplots()
+
+ax.plot(t, msd_c, label="clusters", color="tab:orange")
+
+ax.plot(t, msd_nc, label="free", color="tab:green")
+
+ax.plot(t, msd, label="all", color="tab:blue")
+
+ax.plot(t, t**2/10, linestyle='dashed', color="grey", label="slope 2")
+
+ax.set_xlabel("t")
+
+ax.set_ylabel("msd(0,t)")
+
+ax.set_xscale("log")
+ax.set_yscale("log")
+ax.legend()
+plt.show()
+
+    
+    
+    
 
 
 
