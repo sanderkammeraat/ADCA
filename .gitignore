@@ -1,0 +1,6 @@
+*.avi
+*.png
+*.tif
+
+.DS_Store
+.DS_Store?
