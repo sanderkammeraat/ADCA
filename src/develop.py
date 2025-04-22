@@ -74,6 +74,7 @@ Nframes = max_frame_number - min_frame_number + 1
 #%%
 
 
+
 # Set all values to be masked (True). Upon assignment, they will be unmasked.
 x = np.ma.masked_array( np.zeros( shape = (Nframes,Nparticles_max)), True )
 
@@ -310,9 +311,24 @@ image = ax.imshow(plt.imread(frame_file_paths[i]))
 ax.scatter(x[i,:].compressed(), y[i,:].compressed())
 ax.scatter(xc[i,:].compressed(), yc[i,:].compressed())
 
+#%% 
+
+figure_save_folder = os.path.join(project_folder, "testdata","0404","003","plots")
+
+
+
+
+
 #%%
+#Set up units
+fps=5
+frame2s = 1/fps
+pixel2um = 0.32
+
 
 t = np.arange(Nframes)
+
+
 vrms = np.ma.sqrt(np.ma.mean(vx**2 + vy**2, axis=1))
 
 vrms_nc = np.ma.sqrt(np.ma.mean(vxnc**2 + vync**2, axis=1))
@@ -323,19 +339,21 @@ vrms_c  = np.ma.sqrt(np.ma.mean(vxc**2 + vyc**2, axis=1))
 
 fig, ax = plt.subplots()
 
-ax.plot(t[:-1],vrms_c, label="clusters", color="tab:orange")
+ax.plot(t[:-1]*frame2s,vrms_c*pixel2um/frame2s, label="clusters", color="tab:orange")
 
 
 
 
-ax.plot(t[:-1],vrms, label="all", color="tab:blue")
+ax.plot(t[:-1]*frame2s,vrms*pixel2um/frame2s, label="all", color="tab:blue")
 
-ax.plot(t[:-1],vrms_nc, label="free", color="tab:green")
-ax.set_ylim(0,1)
-ax.set_xlabel("t")
-ax.set_ylabel("v_rms(t)")
+ax.plot(t[:-1]*frame2s,vrms_nc*pixel2um/frame2s, label="free", color="tab:green")
+ax.set_ylim(0,2)
+ax.set_xlabel("t (s)")
+ax.set_ylabel("v_rms(t) (um/s)")
 ax.legend()
+
 plt.show()
+plt.savefig(os.path.join(figure_save_folder,"vrms.pdf"))
 
 #%%
 nbins= 10
@@ -398,9 +416,9 @@ def plot_v_over_t_histogram(fig, ax,t, v_hists,title):
         
         densities =  v_hist[0]
         
-        ax.semilogy( edges2centers(bins) ,  densities, c= t_colors[i], label="t= %d" %t[i])#, c = t_colors[i])
+        ax.semilogy( edges2centers(bins)*pixel2um/frame2s ,  densities, c= t_colors[i], label="t= %d s" %(t[i]*frame2s))#, c = t_colors[i])
         
-    plt.xlabel("v")
+    plt.xlabel("v (um/s)")
     plt.ylabel("p(v)")
     ax.legend()
     plt.show()
@@ -411,14 +429,17 @@ def plot_v_over_t_histogram(fig, ax,t, v_hists,title):
 fig, ax = plt.subplots()    
 fig, ax = plot_v_over_t_histogram(fig, ax, t[::100],  v_hists[::100], "Distribution of v for all")
 plt.show()
+plt.savefig(os.path.join(figure_save_folder,"speed_distribution_all.pdf"))
 
 fig, ax = plt.subplots()    
 fig, ax = plot_v_over_t_histogram(fig, ax, t[::100],  vnc_hists[::100], "Distribution of v for free")
 plt.show()
+plt.savefig(os.path.join(figure_save_folder,"speed_distribution_free.pdf"))
 
 fig, ax = plt.subplots()    
 fig, ax = plot_v_over_t_histogram(fig, ax, t[::100],  vc_hists[::100], "Distribution of v for clusters")
 plt.show()
+plt.savefig(os.path.join(figure_save_folder,"speed_distribution_cluster.pdf"))
 
 #%%
 nbins= 10
@@ -462,19 +483,20 @@ n_all = np.ma.sum( ~x.mask, axis=1)
 
 n_free = np.ma.sum( ~xnc.mask, axis=1)
 
-ax.plot(t, n_cluster, label="clusters", color="tab:orange")
+ax.plot(t*frame2s, n_cluster, label="clusters", color="tab:orange")
 
-ax.plot(t, n_free, label="free", color="tab:green")
+ax.plot(t*frame2s, n_free, label="free", color="tab:green")
 
-ax.plot(t, n_all, label="all")
+ax.plot(t*frame2s, n_all, label="all")
 ax.legend()
 
 ax.set_ylim(0,1000)
 
-ax.set_xlabel("t")
+ax.set_xlabel("t (s)")
 
 ax.set_ylabel("N(t)")
 plt.show()
+plt.savefig(os.path.join(figure_save_folder,"N_over_time.pdf"))
 
 #%%
 
@@ -501,22 +523,24 @@ msd = calculate_MSD(x, y)
 #%%
 fig, ax = plt.subplots()
 
-ax.plot(t, msd_c, label="clusters", color="tab:orange")
+ax.plot(t*frame2s, msd_c*pixel2um**2, label="clusters", color="tab:orange")
 
-ax.plot(t, msd_nc, label="free", color="tab:green")
+ax.plot(t*frame2s, msd_nc*pixel2um**2, label="free", color="tab:green")
 
-ax.plot(t, msd, label="all", color="tab:blue")
+ax.plot(t*frame2s, msd*pixel2um**2, label="all", color="tab:blue")
 
-ax.plot(t, t**2/10, linestyle='dashed', color="grey", label="slope 2")
+ax.plot(t*frame2s, t**2/40, linestyle='dashed', color="grey", label="slope 2")
 
-ax.set_xlabel("t")
+ax.set_xlabel("t (s)")
 
-ax.set_ylabel("msd(0,t)")
+ax.set_ylabel("msd(0,t) (um^2)")
 
 ax.set_xscale("log")
 ax.set_yscale("log")
 ax.legend()
+
 plt.show()
+plt.savefig(os.path.join(figure_save_folder,"MSD.pdf"))
 
     
     
