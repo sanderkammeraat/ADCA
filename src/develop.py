@@ -30,7 +30,7 @@ test_trajectories_file_path = os.path.join(project_folder, "testdata","0304","00
 
 test_trajectories_file_path = os.path.join(project_folder, "testdata","0404","003","Trayectory Hydrazine 003_entire_field.csv")
 
-#test_trajectories_file_path = os.path.join(project_folder, "testdata","0404","017","Trayectory Hydrazine 017.csv")
+test_trajectories_file_path = os.path.join(project_folder, "testdata","0404","017","Trayectory Hydrazine 017.csv")
 
 
 
@@ -118,7 +118,7 @@ frame_folder_path = os.path.join(project_folder, "testdata","0304","003","frames
 
 frame_folder_path = os.path.join(project_folder, "testdata","0404","003","frames")
 
-#frame_folder_path = os.path.join(project_folder, "testdata","0404","017","frames")
+frame_folder_path = os.path.join(project_folder, "testdata","0404","017","frames")
 
 frame_file_paths = sorted(glob.glob(os.path.join(frame_folder_path, "*.png") ))
 
@@ -179,13 +179,17 @@ plt.show()
 #%%
 
 
-def detect_clusters(x,y, r_cut):
+def detect_clusters(x,y, r_cut, Nframes_stop=None):
     
     in_clusters = np.zeros(shape = x.shape,dtype=bool)
     
+    Nframes = x.shape[0]
+    if Nframes_stop is not None:
+        
+        Nframes = Nframes_stop
+        
     
-    
-    for i in tqdm(range(x.shape[0])):
+    for i in tqdm(range(Nframes)):
         xi = x[i,:]
         yi = y[i,:]
         
@@ -211,7 +215,7 @@ def detect_clusters(x,y, r_cut):
     xnc = copy.deepcopy(x)
     ync = copy.deepcopy(y)
     
-    #Mask if not in cluster
+    #Mask if not in clusters
     xc.mask[~in_clusters]=True
     
     yc.mask[~in_clusters]=True
@@ -222,7 +226,8 @@ def detect_clusters(x,y, r_cut):
     
     return in_clusters, xc, yc, xnc, ync
 
-in_clusters, xc, yc, xnc, ync = detect_clusters(x, y, 30)
+# 30 works well for the triangles, 40 for the hexagons
+in_clusters, xc, yc, xnc, ync = detect_clusters(x, y, 40)
 #%%
 vxc = np.ma.diff(xc, axis=0)
 
@@ -296,7 +301,7 @@ anim = animation.FuncAnimation(fig, update_frame, range(0, Nframes, 20), interva
 
 
 
-#anim.save(filename=os.path.join(project_folder,"analysis_movies", "clusters_0404_003.mp4"), writer="ffmpeg")
+anim.save(filename=os.path.join(project_folder,"analysis_movies", "clusters_0404_017.mp4"), writer="ffmpeg")
 plt.show()
 
 
@@ -314,6 +319,8 @@ ax.scatter(xc[i,:].compressed(), yc[i,:].compressed())
 #%% 
 
 figure_save_folder = os.path.join(project_folder, "testdata","0404","003","plots")
+
+figure_save_folder = os.path.join(project_folder, "testdata","0404","017","plots")
 
 
 
@@ -424,20 +431,20 @@ def plot_v_over_t_histogram(fig, ax,t, v_hists,title):
     plt.show()
     return fig, ax
 
-
+plot_every = 400
 
 fig, ax = plt.subplots()    
-fig, ax = plot_v_over_t_histogram(fig, ax, t[::100],  v_hists[::100], "Distribution of v for all")
+fig, ax = plot_v_over_t_histogram(fig, ax, t[::plot_every],  v_hists[::plot_every], "Distribution of v for all")
 plt.show()
 plt.savefig(os.path.join(figure_save_folder,"speed_distribution_all.pdf"))
 
 fig, ax = plt.subplots()    
-fig, ax = plot_v_over_t_histogram(fig, ax, t[::100],  vnc_hists[::100], "Distribution of v for free")
+fig, ax = plot_v_over_t_histogram(fig, ax, t[::plot_every],  vnc_hists[::plot_every], "Distribution of v for free")
 plt.show()
 plt.savefig(os.path.join(figure_save_folder,"speed_distribution_free.pdf"))
 
 fig, ax = plt.subplots()    
-fig, ax = plot_v_over_t_histogram(fig, ax, t[::100],  vc_hists[::100], "Distribution of v for clusters")
+fig, ax = plot_v_over_t_histogram(fig, ax, t[::plot_every],  vc_hists[::plot_every], "Distribution of v for clusters")
 plt.show()
 plt.savefig(os.path.join(figure_save_folder,"speed_distribution_cluster.pdf"))
 
