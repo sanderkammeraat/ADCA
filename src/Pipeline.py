@@ -70,26 +70,34 @@ def load_trajectories(csv_filepath):
     
     return x, y 
 
-def moving_average(x, wlen):
+def centered_moving_average(x, wlen):
     
     #xs = sp.signal.oaconvolve(x, np.ones( shape = (wlen,1) ), 'valid', axes=0) / wlen
     
     
     
-    xs = copy.deepcopy(x [:x.shape[0]-wlen+1,:] )
+    #xs = copy.deepcopy(x [:x.shape[0]-wlen+1,:] )
+    
+    xs = copy.deepcopy(x)
+    
+    xs.mask[:wlen//2,:] = True
+    
+    xs.mask[-wlen//2,:] = True
+    
+    
     for i in range(x.shape[1]):
         
         
-        xs[:,i] = np.ma.convolve(x[:,i], np.ones(wlen), "valid")/wlen
+        xs[wlen//2:-wlen//2+1,i] = np.ma.convolve(x[:,i], np.ones(wlen), "valid")/wlen
 
     return xs
 def smooth_trajectories(x, y, wlen_taxis):
     
     
     
-    xs =  moving_average(x, wlen_taxis)
+    xs =  centered_moving_average(x, wlen_taxis)
     
-    ys = moving_average(y, wlen_taxis)
+    ys = centered_moving_average(y, wlen_taxis)
     
     return xs, ys
 

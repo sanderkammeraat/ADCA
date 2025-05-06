@@ -4,7 +4,7 @@ save_data_on_exit = True
 save_history = True
 save_non_project_files = False
 project_type = 'empty-project-type'
-recent_files = ['../.spyder-py3/temp.py']
+recent_files = ['../.spyder-py3/temp.py', 'src/develop.py', 'src/develop_analysis.py', 'src/Pipeline.py', 'segmentation/segmentation.py', 'src/dev_segmentation.py', 'segmentation/segmentation_poly.py', 'segmentation/segmentation_approx.py']
 
 [main]
 version = 0.2.0

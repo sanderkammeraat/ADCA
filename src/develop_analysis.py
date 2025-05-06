@@ -37,9 +37,9 @@ project_folder = os.getcwd()
 
 test_trajectories_file_path = os.path.join(project_folder, "testdata","0304","003","Trayectory Hydrazine 003.csv")
 
-test_trajectories_file_path = os.path.join(project_folder, "testdata","0404","003","Trayectory Hydrazine 003_entire_field.csv")
+#test_trajectories_file_path = os.path.join(project_folder, "testdata","0404","003","Trayectory Hydrazine 003_entire_field.csv")
 
-test_trajectories_file_path = os.path.join(project_folder, "testdata","0404","017","Trayectory Hydrazine 017.csv")
+#test_trajectories_file_path = os.path.join(project_folder, "testdata","0404","017","Trayectory Hydrazine 017.csv")
 
 
 
@@ -47,12 +47,12 @@ project_folder = os.getcwd()
 
 csv_filepath =test_trajectories_file_path
 
-x, y = pl.load_trajectories(csv_filepath)
+xraw, yraw = pl.load_trajectories(csv_filepath)
 
 #%% Smooth
 
 
-x, y = pl.smooth_trajectories(x, y, 40)
+x, y = pl.smooth_trajectories(xraw, yraw, 10)
 
     
 #%%
@@ -69,9 +69,9 @@ vy = np.ma.diff(y, axis=0)
 
 frame_folder_path = os.path.join(project_folder, "testdata","0304","003","frames")
 
-frame_folder_path = os.path.join(project_folder, "testdata","0404","003","frames")
+#frame_folder_path = os.path.join(project_folder, "testdata","0404","003","frames")
 
-frame_folder_path = os.path.join(project_folder, "testdata","0404","017","frames")
+#frame_folder_path = os.path.join(project_folder, "testdata","0404","017","frames")
 
 frame_file_paths = sorted(glob.glob(os.path.join(frame_folder_path, "*.png") ))
 
@@ -99,7 +99,7 @@ lines = [0] * x.shape[1]
 
 
 for i in range(x.shape[1]):
-    lines[i] = plt.plot(x[:1,i], y[:1,i], c = colors[i] )
+    lines[i] = plt.plot(x[:1,i], y[:1,i], c = colors[i], marker='.',markersize=5 )
 
 
 image = ax.imshow(frame)
@@ -123,7 +123,7 @@ def update_frame(i):
     return scatter,  image, title, *[line[0] for line in lines]
 
 
-anim = animation.FuncAnimation(fig, update_frame, range(0, x.shape[0], 10), interval=0.1, blit=True, repeat=False)
+anim = animation.FuncAnimation(fig, update_frame, range(0, x.shape[0], 1), interval=0.1, blit=True, repeat=True)
 plt.show()
 
 ## Check!
@@ -271,7 +271,7 @@ ax.scatter(xc[i,:].compressed(), yc[i,:].compressed())
 
 #%% 
 
-figure_save_folder = os.path.join(project_folder, "testdata","0404","003","smoothed_plots")
+figure_save_folder = os.path.join(project_folder, "testdata","0404","017","smoothed_plots")
 
 #figure_save_folder = os.path.join(project_folder, "testdata","0404","017","plots")
 
