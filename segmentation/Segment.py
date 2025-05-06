@@ -22,7 +22,7 @@ import trackpy as tp
 #Assuming  of the form 
 #frame_array = nd2.imread(filename,dask=True)
 
-# If you want to check only one frame, say frame i, use detect_spahes([frame_array[i]] )
+# If you want to check only one frame, say frame i, use detect_shapes([frame_array[i]] ), i.e. put the single frame in a list.
 
 def detect_shapes(frame_array, p0_min=4.1, p0_max=4.7, area_min=150, area_max=300,  Canny_min=60, Canny_max=100, plot_result=False, plot_all_steps=False):
     
