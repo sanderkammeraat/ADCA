@@ -26,11 +26,11 @@ import addcopyfighandler
 #Get the folder of this project. Using os.path.join() so it works well on Windows and Unix 
 project_folder = os.getcwd()
 
-test_trajectories_file_path = os.path.join(project_folder, "testdata","0304","003","Trayectory Hydrazine 003.csv")
+# test_trajectories_file_path = os.path.join(project_folder, "testdata","0304","003","Trayectory Hydrazine 003.csv")
 
-test_trajectories_file_path = os.path.join(project_folder, "testdata","0404","003","Trayectory Hydrazine 003_entire_field.csv")
+# test_trajectories_file_path = os.path.join(project_folder, "testdata","0404","003","Trayectory Hydrazine 003_entire_field.csv")
 
-test_trajectories_file_path = os.path.join(project_folder, "testdata","0404","017","Trayectory Hydrazine 017.csv")
+test_trajectories_file_path = os.path.join(project_folder, "testdata","new_segmentation","trayectories.csv")
 
 
 
@@ -116,11 +116,11 @@ vy = np.ma.diff(y, axis=0)
 
 # To test the extraction, plot on top of actual pngs.
 
-frame_folder_path = os.path.join(project_folder, "testdata","0304","003","frames")
+# frame_folder_path = os.path.join(project_folder, "testdata","0304","003","frames")
 
-frame_folder_path = os.path.join(project_folder, "testdata","0404","003","frames")
+# frame_folder_path = os.path.join(project_folder, "testdata","0404","003","frames")
 
-frame_folder_path = os.path.join(project_folder, "testdata","0404","017","frames")
+frame_folder_path = os.path.join(project_folder, "testdata","new_segmentation","frames")
 
 frame_file_paths = sorted(glob.glob(os.path.join(frame_folder_path, "*.png") ))
 

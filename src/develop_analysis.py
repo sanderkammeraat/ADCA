@@ -35,7 +35,7 @@ import addcopyfighandler
 #Get the folder of this project. Using os.path.join() so it works well on Windows and Unix 
 project_folder = os.getcwd()
 
-test_trajectories_file_path = os.path.join(project_folder, "testdata","0304","003","Trayectory Hydrazine 003.csv")
+test_trajectories_file_path = os.path.join(project_folder, "testdata","new_segmentation","trayectories.csv")
 
 #test_trajectories_file_path = os.path.join(project_folder, "testdata","0404","003","Trayectory Hydrazine 003_entire_field.csv")
 
@@ -49,8 +49,29 @@ csv_filepath =test_trajectories_file_path
 
 xraw, yraw = pl.load_trajectories(csv_filepath)
 
-#%% Smooth
 
+#%%
+
+
+plt.figure()
+
+Ns = np.zeros(xraw.shape[0])
+for i in range(xraw.shape[0]):
+    Ns[i]=len( xraw[i,:].compressed() )
+
+plt.ylim(0,1000)
+
+plt.plot(Ns)
+
+#plt.xlim(1800,3000)
+plt.show()
+#plt.savefig("Ntotal.pdf")
+
+plt.xlabel("frame")
+plt.ylabel("N(frame)")
+#plt.savefig("Ntotal.pdf")
+
+#%% Smooth
 
 x, y = pl.smooth_trajectories(xraw, yraw, 10)
 
@@ -67,11 +88,12 @@ vy = np.ma.diff(y, axis=0)
 
 # To test the extraction, plot on top of actual pngs.
 
-frame_folder_path = os.path.join(project_folder, "testdata","0304","003","frames")
+#frame_folder_path = os.path.join(project_folder, "testdata","0304","003","frames")
 
 #frame_folder_path = os.path.join(project_folder, "testdata","0404","003","frames")
 
 #frame_folder_path = os.path.join(project_folder, "testdata","0404","017","frames")
+frame_folder_path = os.path.join(project_folder, "testdata","new_segmentation","frames")
 
 frame_file_paths = sorted(glob.glob(os.path.join(frame_folder_path, "*.png") ))
 
@@ -285,6 +307,8 @@ fps=5
 frame2s = 1/fps
 pixel2um = 0.32
 
+#%%
+
 
 t = np.arange(x.shape[0])
 
@@ -474,18 +498,20 @@ def calculate_MSD(x, y):
     return msd
 
 
-msd_nc = calculate_MSD(xnc, ync)
+# msd_nc = calculate_MSD(xnc, ync)
 
-msd_c = calculate_MSD(xc, yc)
+# msd_c = calculate_MSD(xc, yc)
 
-msd = calculate_MSD(x, y)
+msd = calculate_MSD(xraw, yraw)
 
 #%%
+
+t = np.arange(x.shape[0])
 fig, ax = plt.subplots()
 
-ax.plot(t*frame2s, msd_c*pixel2um**2, label="clusters", color="tab:orange")
+#ax.plot(t*frame2s, msd_c*pixel2um**2, label="clusters", color="tab:orange")
 
-ax.plot(t*frame2s, msd_nc*pixel2um**2, label="free", color="tab:green")
+#ax.plot(t*frame2s, msd_nc*pixel2um**2, label="free", color="tab:green")
 
 ax.plot(t*frame2s, msd*pixel2um**2, label="all", color="tab:blue")
 
@@ -500,7 +526,7 @@ ax.set_yscale("log")
 ax.legend()
 
 plt.show()
-plt.savefig(os.path.join(figure_save_folder,"MSD.pdf"))
+#plt.savefig(os.path.join(figure_save_folder,"MSD.pdf"))
 
     
     
